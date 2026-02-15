@@ -11,7 +11,7 @@ Inventory（YAML）→ Plan → Apply の **ガードレール重視**の設計�
 ### uvx（GitHub からそのまま実行）
 
 ```bash
-uvx --from git+https://github.com/<ORG>/<REPO>.git wtplan --help
+uvx --from git+https://github.com/hiono/wtplan.git wtplan --help
 ```
 
 ### 開発（uv）
