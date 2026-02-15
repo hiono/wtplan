@@ -65,17 +65,27 @@ wtplan
 
 ### Available Tools (v0.1)
 
-- `init`
-- `preset_add` (Only links plan/apply is implemented. Git worktree operations are not yet implemented)
-- `preset_rm` (Stub)
-- `plan` (Links diff)
-- `path` (Read-only reference)
+**Preset Mode:**
+- `preset_add` - Create workspace from preset + Issue IID (links plan/apply only, git worktree not implemented)
+- `preset_rm` - Remove workspace from preset + Issue IID (stub)
+- `preset_path` - Get workspace path from preset + Issue IID
+
+**Single Repo Mode:**
+- `repo_add` - Create workspace from single repo + Issue IID (links plan/apply only, git worktree not implemented)
+- `repo_rm` - Remove workspace from single repo + Issue IID (stub)
+- `repo_path` - Get workspace path from single repo + Issue IID
+
+**Common:**
+- `init` - Initialize inventory and workspace layout
+- `plan` - Show differences between inventory and actual state
 
 ### Available Prompts (v0.1)
 
-- `create_workspace_from_issue`
-- `review_workspace_plan`
-- `safe_remove_workspace`
+- `create_preset_workspace` - Create workspace from preset
+- `create_repo_workspace` - Create workspace from single repo
+- `review_workspace_plan` - Review plan and warn about destructive changes
+- `safe_remove_preset` - Safely remove workspace from preset
+- `safe_remove_repo` - Safely remove workspace from single repo
 
 ## License
 
