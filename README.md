@@ -9,7 +9,7 @@ It also runs as an MCP (Model Context Protocol) stdio server, providing Tools an
 ### uvx (Run directly from GitHub)
 
 ```bash
-uvx --from git+https://github.com/<ORG>/<REPO>.git wtplan --help
+uvx --from git+https://github.com/hiono/wtplan.git wtplan --help
 ```
 
 ### Development (uv)
