@@ -1,77 +1,77 @@
 # wtplan
 
-**wtplan** は、Issue 番号を起点に複数リポジトリの Git worktree（workspace）をまとめて管理するツール。
-Inventory（YAML）→ Plan → Apply の流れで、誤操作を防ぐ仕組みを組み込んでいる。
-MCP（Model Context Protocol）の stdio サーバーとしても動作し、Tools/Prompts を提供する。
+**wtplan** is a tool for managing Git worktrees (workspaces) across multiple repositories using an Issue number as the starting point.
+It follows an Inventory → Plan → Apply workflow with built-in safeguards to prevent accidental operations.
+It also runs as an MCP (Model Context Protocol) stdio server, providing Tools and Prompts.
 
-## インストール（uvx / 開発）
+## Installation (uvx / Development)
 
-### uvx（GitHub からそのまま実行）
+### uvx (Run directly from GitHub)
 
 ```bash
 uvx --from git+https://github.com/<ORG>/<REPO>.git wtplan --help
 ```
 
-### 開発（uv）
+### Development (uv)
 
 ```bash
 uv sync
 uv run wtplan --help
 ```
 
-## 使い方（CLI）
+## Usage (CLI)
 
-### 初期化
+### Initialization
 
 ```bash
 wtplan init --toolbox /workspace/toolbox
 ```
 
-- `.wtplan.yml` がなければ生成（`default_policy` を含む雛形）
-- `bare/` と `worktrees/` を作成
+- Creates `.wtplan.yml` if it doesn't exist (template including `default_policy`)
+- Creates `bare/` and `worktrees/` directories
 
-### workspace パスの取得（cd 補助に使える）
+### Get Workspace Path (Useful for cd helper)
 
 ```bash
 wtplan path <PRESET> <IID> --repo <ALIAS>
 ```
 
-### 補完（bash）
+### Completion (bash)
 
 ```bash
 eval "$(wtplan completion bash)"
 ```
 
-### cd（シェル組み込みなので eval 前提）
+### cd (Requires shell integration via eval)
 
 ```bash
 eval "$(wtplan cd <PRESET> <IID> --repo <ALIAS>)"
 ```
 
-## links_repo_root の上書きポリシー
+## links_repo_root Override Policy
 
-- `--force-links` = **rsync -a 相当（delete なし）**
-- `--delete-links` = **rsync -a --delete 相当（delete あり）**
+- `--force-links` = **rsync -a equivalent (without delete)**
+- `--delete-links` = **rsync -a --delete equivalent (with delete)**
 
-`default_policy.links_repo_root.force/delete` は **全コマンド（plan / preset_add / preset_rm / init）で共通**して解釈する。
+`default_policy.links_repo_root.force/delete` is **interpreted consistently across all commands** (plan / preset_add / preset_rm / init).
 
-## MCP（stdio）
+## MCP (stdio)
 
-`wtplan` を引数なしで起動すると stdio の MCP サーバーとして待ち受ける。
+Launch `wtplan` with no arguments to start as an MCP stdio server.
 
 ```bash
 wtplan
 ```
 
-### 公開 Tools（v0.1）
+### Available Tools (v0.1)
 
 - `init`
-- `preset_add`（links の plan/apply のみ実装。git worktree は未実装）
-- `preset_rm`（スタブ）
-- `plan`（links の差分）
-- `path`（参照専用）
+- `preset_add` (Only links plan/apply is implemented. Git worktree operations are not yet implemented)
+- `preset_rm` (Stub)
+- `plan` (Links diff)
+- `path` (Read-only reference)
 
-### 公開 Prompts（v0.1）
+### Available Prompts (v0.1)
 
 - `create_workspace_from_issue`
 - `review_workspace_plan`

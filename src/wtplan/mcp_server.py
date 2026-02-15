@@ -14,7 +14,7 @@ mcp = FastMCP("wtplan", json_response=True)
 
 @mcp.tool(name="init")
 def tool_init(toolbox_dir: str | None = None, config_path: str | None = None) -> dict[str, Any]:
-    """Inventory 初期化、bare 準備、（任意）toolbox 有効化。"""
+    """Initialize inventory, prepare bare repository, optionally enable toolbox."""
     base = Path.cwd()
     inv_path = Path(config_path) if config_path else base / ".wtplan.yml"
     if not inv_path.exists():
@@ -29,7 +29,7 @@ def tool_init(toolbox_dir: str | None = None, config_path: str | None = None) ->
 
 @mcp.tool(name="plan")
 def tool_plan(workspace_id: str | None = None) -> dict[str, Any]:
-    """inventory と実体の差分（作成/削除/更新）を要約。"""
+    """Summarize differences between inventory and actual state (create/delete/update)."""
     base = Path.cwd()
     inv = load_inventory(base / ".wtplan.yml")
     pol = effective_policy(inv, cli_force=False, cli_delete=False)
@@ -46,7 +46,7 @@ def tool_preset_add(
     force_links: bool | None = False,
     delete_links: bool | None = False,
 ) -> dict[str, Any]:
-    """preset + Issue IID から workspace を作成（plan→confirm→apply）。"""
+    """Create workspace from preset + Issue IID (plan → confirm → apply)."""
     base_dir = Path.cwd()
     inv = load_inventory(base_dir / ".wtplan.yml")
     pol = effective_policy(inv, cli_force=bool(force_links), cli_delete=bool(delete_links))
@@ -64,7 +64,7 @@ def tool_preset_rm(
     force: bool | None = False,
     apply: bool | None = False,
 ) -> dict[str, Any]:
-    """preset + Issue IID から workspace をセーフ削除（v0.1 はスタブ）。"""
+    """Safely remove workspace from preset + Issue IID (v0.1 is a stub)."""
     return {
         "apply": bool(apply),
         "force": bool(force),
@@ -76,7 +76,7 @@ def tool_preset_rm(
 
 @mcp.tool(name="path")
 def tool_path(preset: str, issue_iid: int, repo: str | None = None) -> dict[str, Any]:
-    """workspace/repo の絶対パスを返す（参照専用）。"""
+    """Return absolute path of workspace/repo (read-only reference)."""
     base_dir = Path.cwd()
     inv = load_inventory(base_dir / ".wtplan.yml")
     p = workspace_path(inv, base_dir, preset=preset, iid=issue_iid, repo=repo)
@@ -88,10 +88,10 @@ def prompt_create_workspace_from_issue(preset: str, issue_iid: int, base: str | 
     b = base or ""
     args = f"preset: '{preset}', issue_iid: {issue_iid}, base: '{b}', apply: false"
     return (
-        "Issue IID から workspace を作成。\n"
-        "1) plan を取得（apply=false）\n"
+        "Create workspace from Issue IID.\n"
+        "1) Get plan (apply=false)\n"
         f"   tools/call: preset_add {{{args}}}\n"
-        "2) plan を確認して問題なければ apply=true で実行\n"
+        "2) Review the plan, then execute with apply=true if no issues\n"
         "   tools/call: preset_add {..., apply: true}\n"
     )
 
@@ -99,14 +99,14 @@ def prompt_create_workspace_from_issue(preset: str, issue_iid: int, base: str | 
 @mcp.prompt(name="review_workspace_plan")
 def prompt_review_workspace_plan(workspace_id: str | None = None) -> str:
     return (
-        "plan の内容を要約して、CONFLICT/UPDATE/DELETE を強調。\n"
-        "特に delete-links（rsync -a --delete 相当）を伴う場合は破壊的変更として注意喚起。\n"
+        "Summarize the plan content, highlighting CONFLICT/UPDATE/DELETE.\n"
+        "Especially warn about destructive changes when delete-links (rsync -a --delete equivalent) is involved.\n"
     )
 
 
 @mcp.prompt(name="safe_remove_workspace")
 def prompt_safe_remove_workspace(preset: str, issue_iid: int) -> str:
-    msg = "workspace 削除前に状態を確認（dirty/unpushed/diverged/unknown）して、force の是非を問いかける。"
+    msg = "Before removing workspace, check status (dirty/unpushed/diverged/unknown) and ask whether force is appropriate."
     args = f"preset: '{preset}', issue_iid: {issue_iid}, force: false, apply: false"
     call = f"tools/call: preset_rm {{{args}}}"
     return f"{msg}\n{call}\n"
