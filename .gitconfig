@@ -1,0 +1,20 @@
+[core]
+  whitespace = cr-at-eol
+  autocrlf = false
+  pager = delta
+[init]
+  defaultBranch = main
+[credential]
+  helper = "!f() { echo \"username=oauth2\"; echo \"password=$GITHUB_TOKEN\"; }; f"
+[gpg]
+  format = ssh
+[rebase]
+  autostash = true
+[rerere]
+  enabled = true
+[pull]
+  rebase = true
+[interactive]
+  diffFilter = delta --color-only
+[delta]
+  navigate = true
