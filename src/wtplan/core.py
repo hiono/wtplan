@@ -43,15 +43,26 @@ def compute_workspace_id(repo_upper: str, iid: int) -> str:
     return f"{repo_upper}_ISSUE_{iid:04d}"
 
 
-def workspace_path(inv: dict, base_dir: Path, preset: str, iid: int, repo: str | None) -> Path:
+def workspace_path(inv: dict, base_dir: Path, preset: str | None, iid: int | None, repo: str | None) -> Path:
     presets = inv.get("presets") or {}
+
+    # Single repo mode: when preset is None
+    if preset is None:
+        primary = repo or "default"
+        alias = repo or primary
+        repo_upper = primary.upper()
+        ws_id = compute_workspace_id(repo_upper, iid or 0)
+        paths = resolve_paths(inv, base_dir)
+        return paths.workspaces_dir / ws_id / alias
+
+    # Preset mode
     p = presets.get(preset)
     if not p:
         raise KeyError(f"Unknown preset: {preset}")
     primary = str(p.get("primary_repo"))
     alias = repo or primary
     repo_upper = primary.upper()
-    ws_id = compute_workspace_id(repo_upper, iid)
+    ws_id = compute_workspace_id(repo_upper, iid or 0)
     paths = resolve_paths(inv, base_dir)
     return paths.workspaces_dir / ws_id / alias
 
