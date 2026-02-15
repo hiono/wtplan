@@ -14,7 +14,7 @@ mcp = FastMCP("wtplan", json_response=True)
 
 @mcp.tool(name="init")
 def tool_init(toolbox_dir: str | None = None, config_path: str | None = None) -> dict[str, Any]:
-    """Inventory 初期化、bare 準備、（任意で）toolbox 有効化。"""
+    """Inventory 初期化、bare 準備、（任意）toolbox 有効化。"""
     base = Path.cwd()
     inv_path = Path(config_path) if config_path else base / ".wtplan.yml"
     if not inv_path.exists():
@@ -29,7 +29,7 @@ def tool_init(toolbox_dir: str | None = None, config_path: str | None = None) ->
 
 @mcp.tool(name="plan")
 def tool_plan(workspace_id: str | None = None) -> dict[str, Any]:
-    """inventory と実体との差分（作成/削除/更新）を要約。"""
+    """inventory と実体の差分（作成/削除/更新）を要約。"""
     base = Path.cwd()
     inv = load_inventory(base / ".wtplan.yml")
     pol = effective_policy(inv, cli_force=False, cli_delete=False)
@@ -88,10 +88,10 @@ def prompt_create_workspace_from_issue(preset: str, issue_iid: int, base: str | 
     b = base or ""
     args = f"preset: '{preset}', issue_iid: {issue_iid}, base: '{b}', apply: false"
     return (
-        "Issue IID から workspace を作成します。\n"
-        "1) まず plan を取得（apply=false）\n"
+        "Issue IID から workspace を作成。\n"
+        "1) plan を取得（apply=false）\n"
         f"   tools/call: preset_add {{{args}}}\n"
-        "2) plan を確認し、問題なければ apply=true で実行\n"
+        "2) plan を確認して問題なければ apply=true で実行\n"
         "   tools/call: preset_add {..., apply: true}\n"
     )
 
@@ -99,14 +99,14 @@ def prompt_create_workspace_from_issue(preset: str, issue_iid: int, base: str | 
 @mcp.prompt(name="review_workspace_plan")
 def prompt_review_workspace_plan(workspace_id: str | None = None) -> str:
     return (
-        "plan の内容を要約し、CONFLICT/UPDATE/DELETE を強調してください。\n"
-        "特に delete-links（rsync -a --delete 相当）を伴う場合は破壊的変更として注意喚起します。\n"
+        "plan の内容を要約して、CONFLICT/UPDATE/DELETE を強調。\n"
+        "特に delete-links（rsync -a --delete 相当）を伴う場合は破壊的変更として注意喚起。\n"
     )
 
 
 @mcp.prompt(name="safe_remove_workspace")
 def prompt_safe_remove_workspace(preset: str, issue_iid: int) -> str:
-    msg = "workspace 削除前に状態を確認（dirty/unpushed/diverged/unknown）し、force の是非を問いかけてください。"
+    msg = "workspace 削除前に状態を確認（dirty/unpushed/diverged/unknown）して、force の是非を問いかける。"
     args = f"preset: '{preset}', issue_iid: {issue_iid}, force: false, apply: false"
     call = f"tools/call: preset_rm {{{args}}}"
     return f"{msg}\n{call}\n"
