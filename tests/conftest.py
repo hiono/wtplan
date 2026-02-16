@@ -1,6 +1,7 @@
 """Test configuration for wtplan tests."""
 
 import os
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -44,6 +45,4 @@ def setup_test_environment():
 
     # Cleanup
     os.chdir(original_cwd)
-    import shutil
-
     shutil.rmtree(temp_dir, ignore_errors=True)
