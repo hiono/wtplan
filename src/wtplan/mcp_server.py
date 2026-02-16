@@ -17,9 +17,11 @@ def tool_init(toolbox_dir: str | None = None, config_path: str | None = None) ->
     """Initialize inventory, prepare bare repository, optionally enable toolbox."""
     base = Path.cwd()
     inv_path = Path(config_path) if config_path else base / ".wtplan.yml"
-    if not inv_path.exists():
+    try:
+        inv = load_inventory(inv_path)
+    except FileNotFoundError:
         ensure_inventory(base, toolbox_dir=toolbox_dir)
-    inv = load_inventory(inv_path)
+        inv = load_inventory(inv_path)
     if toolbox_dir and "toolbox_dir" not in inv:
         inv["toolbox_dir"] = toolbox_dir
         write_inventory(inv_path, inv)
@@ -31,7 +33,11 @@ def tool_init(toolbox_dir: str | None = None, config_path: str | None = None) ->
 def tool_plan(workspace_id: str | None = None) -> dict[str, Any]:
     """Summarize differences between inventory and actual state (create/delete/update)."""
     base = Path.cwd()
-    inv = load_inventory(base / ".wtplan.yml")
+    inv_path = base / ".wtplan.yml"
+    try:
+        inv = load_inventory(inv_path)
+    except FileNotFoundError:
+        return {"error": f"Inventory not found: {inv_path}. Run 'wtplan init' first."}
     pol = effective_policy(inv, cli_force=False, cli_delete=False)
     items = [pi.__dict__ for pi in plan_links(inv, base, pol)]
     return {"links_repo_root": items, "note": "git worktree operations are not implemented in v0.1"}
@@ -49,6 +55,11 @@ def tool_preset_add(
     """Create workspace from preset + Issue IID (plan → confirm → apply)."""
     base_dir = Path.cwd()
     inv = load_inventory(base_dir / ".wtplan.yml")
+    # Validate preset exists
+    try:
+        workspace_path(inv, base_dir, preset=preset, iid=issue_iid, repo=None)
+    except KeyError as e:
+        return {"error": f"Unknown preset: {preset}", "details": str(e)}
     pol = effective_policy(inv, cli_force=bool(force_links), cli_delete=bool(delete_links))
     planned = plan_links(inv, base_dir, pol)
     if not apply:

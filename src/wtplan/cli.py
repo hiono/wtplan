@@ -194,13 +194,6 @@ def cd(
     console.print(
         "[yellow]Warning: 'cd' is deprecated. Use 'wtplan preset path <preset> <issue_iid>' or 'wtplan repo path <repo> <issue_iid>' instead.[/yellow]"
     )
-    # Parse workspace_id to determine preset vs repo
-    # This is a simplified fallback - users should migrate to new commands
-    parts = workspace_id.split("-")
-    if len(parts) >= 2:
-        # Try to extract preset and issue_iid from workspace_id format
-        console.print(f"Attempting to find path for: {workspace_id}")
-        console.print("Please use the new command syntax for better results.")
     raise typer.Exit(1)
 
 
@@ -212,12 +205,6 @@ def path(
     console.print(
         "[yellow]Warning: 'path' is deprecated. Use 'wtplan preset path <preset> <issue_iid>' or 'wtplan repo path <repo> <issue_iid>' instead.[/yellow]"
     )
-    # Parse workspace_id to determine preset vs repo
-    parts = workspace_id.split("-")
-    if len(parts) >= 2:
-        # Try to extract preset and issue_iid from workspace_id format
-        console.print(f"Attempting to find path for: {workspace_id}")
-        console.print("Please use the new command syntax for better results.")
     raise typer.Exit(1)
 
 
