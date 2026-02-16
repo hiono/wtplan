@@ -1,6 +1,5 @@
 """Tests for wtplan CLI."""
 
-import pytest
 from typer.testing import CliRunner
 
 from wtplan.cli import app

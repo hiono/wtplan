@@ -4,23 +4,22 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
-from typing_extensions import Annotated
 
-from .core import ensure_inventory, workspace_path
+from .core import ensure_inventory
 from .inventory import load_inventory
 from .mcp_server import (
     mcp,
     tool_plan,
     tool_preset_add,
-    tool_preset_rm,
     tool_preset_path,
+    tool_preset_rm,
     tool_repo_add,
-    tool_repo_rm,
     tool_repo_path,
+    tool_repo_rm,
 )
 
 console = Console()
@@ -40,7 +39,7 @@ app.add_typer(repo_app, name="repo")
 
 @app.command()
 def init(
-    toolbox: Annotated[Optional[str], typer.Option("--toolbox", help="Toolbox directory path")] = None,
+    toolbox: Annotated[str | None, typer.Option("--toolbox", help="Toolbox directory path")] = None,
 ) -> None:
     """Initialize .wtplan.yml and workspace layout."""
     ensure_inventory(Path.cwd(), toolbox_dir=toolbox)
@@ -53,7 +52,7 @@ def init(
 
 @app.command()
 def plan(
-    workspace_id: Annotated[Optional[str], typer.Option("--workspace-id", help="Workspace identifier")] = None,
+    workspace_id: Annotated[str | None, typer.Option("--workspace-id", help="Workspace identifier")] = None,
 ) -> None:
     """Show differences between inventory and actual state."""
     res = tool_plan(workspace_id=workspace_id)
@@ -90,7 +89,7 @@ complete -F _wtplan_completions wtplan
 def preset_add(
     preset: Annotated[str, typer.Argument(help="Preset name")],
     issue_iid: Annotated[int, typer.Argument(help="GitLab Issue IID")],
-    base: Annotated[Optional[str], typer.Option("--base", help="Base directory")] = None,
+    base: Annotated[str | None, typer.Option("--base", help="Base directory")] = None,
     apply: Annotated[bool, typer.Option("--apply", help="Apply the plan immediately")] = False,
     force_links: Annotated[bool, typer.Option("--force-links", help="Force overwrite when syncing")] = False,
     delete_links: Annotated[bool, typer.Option("--delete-links", help="Delete extra files when syncing")] = False,
@@ -140,7 +139,7 @@ def preset_path(
 def repo_add(
     repo: Annotated[str, typer.Argument(help="Repository name")],
     issue_iid: Annotated[int, typer.Argument(help="GitLab Issue IID")],
-    base: Annotated[Optional[str], typer.Option("--base", help="Base directory")] = None,
+    base: Annotated[str | None, typer.Option("--base", help="Base directory")] = None,
     apply: Annotated[bool, typer.Option("--apply", help="Apply the plan immediately")] = False,
     force_links: Annotated[bool, typer.Option("--force-links", help="Force overwrite when syncing")] = False,
     delete_links: Annotated[bool, typer.Option("--delete-links", help="Delete extra files when syncing")] = False,
@@ -192,7 +191,9 @@ def cd(
 ) -> None:
     """[DEPRECATED] Change to workspace directory. Use 'preset path' or 'repo path' instead."""
     console.print(
-        "[yellow]Warning: 'cd' is deprecated. Use 'wtplan preset path <preset> <issue_iid>' or 'wtplan repo path <repo> <issue_iid>' instead.[/yellow]"
+        "[yellow]Warning: 'cd' is deprecated. "
+        "Use 'wtplan preset path <preset> <issue_iid>' "
+        "or 'wtplan repo path <repo> <issue_iid>' instead.[/yellow]"
     )
     raise typer.Exit(1)
 
@@ -203,7 +204,9 @@ def path(
 ) -> None:
     """[DEPRECATED] Show workspace path. Use 'preset path' or 'repo path' instead."""
     console.print(
-        "[yellow]Warning: 'path' is deprecated. Use 'wtplan preset path <preset> <issue_iid>' or 'wtplan repo path <repo> <issue_iid>' instead.[/yellow]"
+        "[yellow]Warning: 'path' is deprecated. "
+        "Use 'wtplan preset path <preset> <issue_iid>' "
+        "or 'wtplan repo path <repo> <issue_iid>' instead.[/yellow]"
     )
     raise typer.Exit(1)
 

@@ -1,8 +1,9 @@
 """Tests for wtplan repo operations and links/copy functionality."""
 
 import pytest
-from pathlib import Path
 from typer.testing import CliRunner
+
+from wtplan import mcp_server
 from wtplan.cli import app
 
 runner = CliRunner()
@@ -165,7 +166,6 @@ class TestMCPFunctions:
 
     def test_tool_preset_add_with_valid_preset(self, tmp_path, monkeypatch):
         """Test preset add with valid preset and inventory."""
-        from wtplan import mcp_server
 
         monkeypatch.chdir(tmp_path)
         (tmp_path / ".wtplan.yml").write_text(
@@ -184,7 +184,6 @@ class TestMCPFunctions:
 
     def test_tool_preset_add_with_invalid_preset(self, tmp_path, monkeypatch):
         """Test preset add with invalid preset - function returns error dict."""
-        from wtplan import mcp_server
 
         monkeypatch.chdir(tmp_path)
         (tmp_path / ".wtplan.yml").write_text("presets:\n  test:\n    primary_repo: r\n    repos:\n      - r\n")
@@ -201,7 +200,6 @@ class TestMCPFunctions:
 
     def test_tool_preset_path_with_invalid_preset(self, tmp_path, monkeypatch):
         """Test preset path with invalid preset raises error."""
-        from wtplan import mcp_server
 
         monkeypatch.chdir(tmp_path)
         (tmp_path / ".wtplan.yml").write_text("presets: {}")
@@ -214,7 +212,6 @@ class TestMCPFunctions:
 
     def test_tool_repo_add_with_repo(self, tmp_path, monkeypatch):
         """Test repo add with valid repo."""
-        from wtplan import mcp_server
 
         monkeypatch.chdir(tmp_path)
         (tmp_path / ".wtplan.yml").write_text("repos:\n  my-repo:\n    path: /tmp/my-repo\n")
@@ -231,7 +228,6 @@ class TestMCPFunctions:
 
     def test_tool_repo_add_with_invalid_repo(self, tmp_path, monkeypatch):
         """Test repo add with invalid repo - returns plan (validation happens later)."""
-        from wtplan import mcp_server
 
         monkeypatch.chdir(tmp_path)
         (tmp_path / ".wtplan.yml").write_text("repos:\n  my-repo:\n    path: /tmp/my-repo\n")
@@ -252,7 +248,6 @@ class TestEdgeCases:
 
     def test_missing_inventory_file(self, tmp_path, monkeypatch):
         """Test behavior when inventory file is missing."""
-        from wtplan import mcp_server
 
         monkeypatch.chdir(tmp_path)
 
@@ -267,8 +262,7 @@ class TestEdgeCases:
 
     def test_invalid_issue_iid_type(self):
         """Test that invalid issue_iid type is handled."""
-        from wtplan.cli import app
-        from typer.testing import CliRunner
+
 
         runner = CliRunner()
         result = runner.invoke(app, ["preset", "add", "test", "abc"])
@@ -276,7 +270,6 @@ class TestEdgeCases:
 
     def test_preset_add_with_apply_and_force_flags(self, tmp_path, monkeypatch):
         """Test preset add with both --apply and --force-links."""
-        from wtplan import mcp_server
 
         monkeypatch.chdir(tmp_path)
         (tmp_path / ".wtplan.yml").write_text("presets:\n  test:\n    primary_repo: r\n    repos:\n      - r\n")

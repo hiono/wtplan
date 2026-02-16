@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +13,7 @@ from .policy import effective_policy
 mcp = FastMCP("wtplan", json_response=True)
 
 
-class WorkspaceMode(str, Enum):
+class WorkspaceMode(StrEnum):
     """Workspace creation mode."""
 
     PRESET = "preset"
