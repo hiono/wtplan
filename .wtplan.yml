@@ -1,0 +1,15 @@
+version: 1
+root: .
+bare_dir: bare
+workspaces_dir: worktrees
+default_policy:
+  exclude:
+    from_links: true
+    always: []
+  links_repo_root:
+    type: symlink
+    force: false
+    delete: false
+presets: {}
+links_repo_root: []
+workspaces: {}

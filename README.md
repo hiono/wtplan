@@ -30,10 +30,34 @@ wtplan init --toolbox /workspace/toolbox
 - Creates `.wtplan.yml` if it doesn't exist (template including `default_policy`)
 - Creates `bare/` and `worktrees/` directories
 
-### Get Workspace Path (Useful for cd helper)
+### Preset Mode Commands
+
+Create and manage workspaces from a predefined preset configuration:
 
 ```bash
-wtplan path <PRESET> <IID> --repo <ALIAS>
+# Create workspace from preset
+wtplan preset add <PRESET> <IID> [--apply] [--force-links] [--delete-links]
+
+# Remove workspace
+wtplan preset rm <PRESET> <IID>
+
+# Get workspace path
+wtplan preset path <PRESET> <IID> [--repo <ALIAS>]
+```
+
+### Single Repo Mode Commands
+
+Create and manage workspaces from a single repository:
+
+```bash
+# Create workspace from single repo
+wtplan repo add <REPO> <IID> [--apply] [--force-links] [--delete-links]
+
+# Remove workspace
+wtplan repo rm <REPO> <IID>
+
+# Get workspace path
+wtplan repo path <REPO> <IID>
 ```
 
 ### Completion (bash)
@@ -43,6 +67,8 @@ eval "$(wtplan completion bash)"
 ```
 
 ### cd (Requires shell integration via eval)
+
+**Deprecated:** Use `wtplan preset path` or `wtplan repo path` instead.
 
 ```bash
 eval "$(wtplan cd <PRESET> <IID> --repo <ALIAS>)"
@@ -65,17 +91,27 @@ wtplan
 
 ### Available Tools (v0.1)
 
-- `init`
-- `preset_add` (Only links plan/apply is implemented. Git worktree operations are not yet implemented)
-- `preset_rm` (Stub)
-- `plan` (Links diff)
-- `path` (Read-only reference)
+**Preset Mode:**
+- `preset_add` - Create workspace from preset + Issue IID (links plan/apply only, git worktree not implemented)
+- `preset_rm` - Remove workspace from preset + Issue IID (stub)
+- `preset_path` - Get workspace path from preset + Issue IID
+
+**Single Repo Mode:**
+- `repo_add` - Create workspace from single repo + Issue IID (links plan/apply only, git worktree not implemented)
+- `repo_rm` - Remove workspace from single repo + Issue IID (stub)
+- `repo_path` - Get workspace path from single repo + Issue IID
+
+**Common:**
+- `init` - Initialize inventory and workspace layout
+- `plan` - Show differences between inventory and actual state
 
 ### Available Prompts (v0.1)
 
-- `create_workspace_from_issue`
-- `review_workspace_plan`
-- `safe_remove_workspace`
+- `create_preset_workspace` - Create workspace from preset
+- `create_repo_workspace` - Create workspace from single repo
+- `review_workspace_plan` - Review plan and warn about destructive changes
+- `safe_remove_preset` - Safely remove workspace from preset
+- `safe_remove_repo` - Safely remove workspace from single repo
 
 ## License
 

@@ -1,38 +1,79 @@
+"""wtplan CLI - Typer-based command line interface."""
+
 from __future__ import annotations
 
-import argparse
+import sys
 from pathlib import Path
+from typing import Annotated
 
+import typer
 from rich.console import Console
 
-from .core import ensure_inventory, workspace_path
+from .core import ensure_inventory
 from .inventory import load_inventory
-from .mcp_server import mcp, tool_plan
+from .mcp_server import (
+    mcp,
+    tool_plan,
+    tool_preset_add,
+    tool_preset_path,
+    tool_preset_rm,
+    tool_repo_add,
+    tool_repo_path,
+    tool_repo_rm,
+)
 
 console = Console()
+app = typer.Typer(
+    name="wtplan",
+    help="Manage Git worktrees across multiple repositories",
+    no_args_is_help=False,
+)
+
+# Subcommand groups
+preset_app = typer.Typer(help="Manage preset-based workspaces")
+repo_app = typer.Typer(help="Manage single repository workspaces")
+
+app.add_typer(preset_app, name="preset")
+app.add_typer(repo_app, name="repo")
 
 
-def _cmd_init(args: argparse.Namespace) -> int:
-    ensure_inventory(Path.cwd(), toolbox_dir=args.toolbox)
+@app.command()
+def init(
+    toolbox: Annotated[str | None, typer.Option("--toolbox", help="Toolbox directory path")] = None,
+) -> None:
+    """Initialize .wtplan.yml and workspace layout."""
+    ensure_inventory(Path.cwd(), toolbox_dir=toolbox)
     inv = load_inventory(Path.cwd() / ".wtplan.yml")
     console.print("Initialized .wtplan.yml", style="green")
-    if args.toolbox:
-        console.print(f"toolbox_dir: {args.toolbox}")
+    if toolbox:
+        console.print(f"toolbox_dir: {toolbox}")
     console.print(inv)
-    return 0
 
 
-def _cmd_completion(args: argparse.Namespace) -> int:
-    if args.shell != "bash":
+@app.command()
+def plan(
+    workspace_id: Annotated[str | None, typer.Option("--workspace-id", help="Workspace identifier")] = None,
+) -> None:
+    """Show differences between inventory and actual state."""
+    res = tool_plan(workspace_id=workspace_id)
+    console.print_json(data=res)
+
+
+@app.command()
+def completion(
+    shell: Annotated[str, typer.Argument(help="Shell type")] = "bash",
+) -> None:
+    """Generate shell completion script."""
+    if shell != "bash":
         console.print("Only bash completion is provided in v0.1", style="yellow")
-        return 0
+        return
 
     script = """
 _wtplan_completions() {
   local cur
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
-  local cmds="init plan preset path cd completion"
+  local cmds="init plan preset repo completion"
   if [[ ${COMP_CWORD} -eq 1 ]]; then
     COMPREPLY=( $(compgen -W "${cmds}" -- "${cur}") )
     return 0
@@ -41,71 +82,144 @@ _wtplan_completions() {
 complete -F _wtplan_completions wtplan
 """
     print(script.strip())
-    return 0
 
 
-def _cmd_cd(args: argparse.Namespace) -> int:
-    inv = load_inventory(Path.cwd() / ".wtplan.yml")
-    p = workspace_path(inv, Path.cwd(), preset=args.preset, iid=args.iid, repo=args.repo)
-    s = str(p).replace("'", "'''")
-    if args.with_tool:
-        print(f"cd '{s}' && {args.with_tool} .")
-    else:
-        print(f"cd '{s}'")
-    return 0
-
-
-def _cmd_path(args: argparse.Namespace) -> int:
-    inv = load_inventory(Path.cwd() / ".wtplan.yml")
-    p = workspace_path(inv, Path.cwd(), preset=args.preset, iid=args.iid, repo=args.repo)
-    print(str(p))
-    return 0
-
-
-def _cmd_plan(args: argparse.Namespace) -> int:
-    res = tool_plan(workspace_id=args.workspace_id)
+# Preset subcommands
+@preset_app.command("add")
+def preset_add(
+    preset: Annotated[str, typer.Argument(help="Preset name")],
+    issue_iid: Annotated[int, typer.Argument(help="GitLab Issue IID")],
+    base: Annotated[str | None, typer.Option("--base", help="Base directory")] = None,
+    apply: Annotated[bool, typer.Option("--apply", help="Apply the plan immediately")] = False,
+    force_links: Annotated[bool, typer.Option("--force-links", help="Force overwrite when syncing")] = False,
+    delete_links: Annotated[bool, typer.Option("--delete-links", help="Delete extra files when syncing")] = False,
+) -> None:
+    """Create workspace from preset + Issue IID."""
+    res = tool_preset_add(
+        preset=preset,
+        issue_iid=issue_iid,
+        base=base,
+        apply=apply,
+        force_links=force_links,
+        delete_links=delete_links,
+    )
     console.print_json(data=res)
-    return 0
 
 
-def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="wtplan")
-    sub = p.add_subparsers(dest="cmd")
-
-    p_init = sub.add_parser("init")
-    p_init.add_argument("--toolbox", default=None)
-    p_init.set_defaults(func=_cmd_init)
-
-    p_comp = sub.add_parser("completion")
-    p_comp.add_argument("shell", choices=["bash", "zsh", "fish", "pwsh"], default="bash")
-    p_comp.set_defaults(func=_cmd_completion)
-
-    p_cd = sub.add_parser("cd")
-    p_cd.add_argument("preset")
-    p_cd.add_argument("iid", type=int)
-    p_cd.add_argument("--repo", default=None)
-    p_cd.add_argument("--with", dest="with_tool", default=None)
-    p_cd.set_defaults(func=_cmd_cd)
-
-    p_path = sub.add_parser("path")
-    p_path.add_argument("preset")
-    p_path.add_argument("iid", type=int)
-    p_path.add_argument("--repo", default=None)
-    p_path.set_defaults(func=_cmd_path)
-
-    p_plan = sub.add_parser("plan")
-    p_plan.add_argument("--workspace-id", default=None)
-    p_plan.set_defaults(func=_cmd_plan)
-
-    return p
+@preset_app.command("rm")
+def preset_rm(
+    preset: Annotated[str, typer.Argument(help="Preset name")],
+    issue_iid: Annotated[int, typer.Argument(help="GitLab Issue IID")],
+    force: Annotated[bool, typer.Option("--force", help="Force removal without safety checks")] = False,
+) -> None:
+    """Remove workspace from preset + Issue IID."""
+    res = tool_preset_rm(
+        preset=preset,
+        issue_iid=issue_iid,
+        force=force,
+    )
+    console.print_json(data=res)
 
 
-def main(argv: list[str] | None = None) -> None:
-    parser = build_parser()
-    args = parser.parse_args(argv)
+@preset_app.command("path")
+def preset_path(
+    preset: Annotated[str, typer.Argument(help="Preset name")],
+    issue_iid: Annotated[int, typer.Argument(help="GitLab Issue IID")],
+) -> None:
+    """Return absolute path of preset workspace (read-only reference)."""
+    res = tool_preset_path(
+        preset=preset,
+        issue_iid=issue_iid,
+    )
+    print(res["path"])
 
-    if not args.cmd:
+
+# Repo subcommands
+@repo_app.command("add")
+def repo_add(
+    repo: Annotated[str, typer.Argument(help="Repository name")],
+    issue_iid: Annotated[int, typer.Argument(help="GitLab Issue IID")],
+    base: Annotated[str | None, typer.Option("--base", help="Base directory")] = None,
+    apply: Annotated[bool, typer.Option("--apply", help="Apply the plan immediately")] = False,
+    force_links: Annotated[bool, typer.Option("--force-links", help="Force overwrite when syncing")] = False,
+    delete_links: Annotated[bool, typer.Option("--delete-links", help="Delete extra files when syncing")] = False,
+) -> None:
+    """Create workspace from single repo + Issue IID."""
+    res = tool_repo_add(
+        repo=repo,
+        issue_iid=issue_iid,
+        base=base,
+        apply=apply,
+        force_links=force_links,
+        delete_links=delete_links,
+    )
+    console.print_json(data=res)
+
+
+@repo_app.command("rm")
+def repo_rm(
+    repo: Annotated[str, typer.Argument(help="Repository name")],
+    issue_iid: Annotated[int, typer.Argument(help="GitLab Issue IID")],
+    force: Annotated[bool, typer.Option("--force", help="Force removal without safety checks")] = False,
+) -> None:
+    """Remove workspace from single repo + Issue IID."""
+    res = tool_repo_rm(
+        repo=repo,
+        issue_iid=issue_iid,
+        force=force,
+    )
+    console.print_json(data=res)
+
+
+@repo_app.command("path")
+def repo_path(
+    repo: Annotated[str, typer.Argument(help="Repository name")],
+    issue_iid: Annotated[int, typer.Argument(help="GitLab Issue IID")],
+) -> None:
+    """Return absolute path of repo workspace (read-only reference)."""
+    res = tool_repo_path(
+        repo=repo,
+        issue_iid=issue_iid,
+    )
+    print(res["path"])
+
+
+# Backward compatibility - deprecated commands
+@app.command()
+def cd(
+    workspace_id: Annotated[str, typer.Argument(help="Workspace identifier")],
+) -> None:
+    """[DEPRECATED] Change to workspace directory. Use 'preset path' or 'repo path' instead."""
+    console.print(
+        "[yellow]Warning: 'cd' is deprecated. "
+        "Use 'wtplan preset path <preset> <issue_iid>' "
+        "or 'wtplan repo path <repo> <issue_iid>' instead.[/yellow]"
+    )
+    raise typer.Exit(1)
+
+
+@app.command()
+def path(
+    workspace_id: Annotated[str, typer.Argument(help="Workspace identifier")],
+) -> None:
+    """[DEPRECATED] Show workspace path. Use 'preset path' or 'repo path' instead."""
+    console.print(
+        "[yellow]Warning: 'path' is deprecated. "
+        "Use 'wtplan preset path <preset> <issue_iid>' "
+        "or 'wtplan repo path <repo> <issue_iid>' instead.[/yellow]"
+    )
+    raise typer.Exit(1)
+
+
+def main() -> None:
+    """Main entry point - CLI or MCP server mode."""
+    if len(sys.argv) == 1:
+        # No args → MCP server mode
         mcp.run()
-        return
+    else:
+        # Has args → CLI mode
+        app()
 
-    raise SystemExit(args.func(args))
+
+if __name__ == "__main__":
+    main()
