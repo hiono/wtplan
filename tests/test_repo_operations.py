@@ -158,3 +158,135 @@ class TestDeprecatedCommands:
         """Test path command shows deprecation warning."""
         result = runner.invoke(app, ["path", "--help"])
         assert result.exit_code == 0
+
+
+class TestMCPFunctions:
+    """Tests for MCP function integration."""
+
+    def test_tool_preset_add_with_valid_preset(self, tmp_path, monkeypatch):
+        """Test preset add with valid preset and inventory."""
+        from wtplan import mcp_server
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".wtplan.yml").write_text(
+            "presets:\n  test-preset:\n    primary_repo: test-repo\n    repos:\n      - test-repo\n"
+        )
+
+        result = mcp_server.tool_preset_add(
+            preset="test-preset",
+            issue_iid=1,
+            base=str(tmp_path),
+            apply=False,
+            force_links=False,
+            delete_links=False,
+        )
+        assert result is not None
+
+    def test_tool_preset_add_with_invalid_preset(self, tmp_path, monkeypatch):
+        """Test preset add with invalid preset - function returns error dict."""
+        from wtplan import mcp_server
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".wtplan.yml").write_text("presets:\n  test:\n    primary_repo: r\n    repos:\n      - r\n")
+
+        result = mcp_server.tool_preset_add(
+            preset="nonexistent",
+            issue_iid=1,
+            apply=False,
+            force_links=False,
+            delete_links=False,
+        )
+        assert result is not None
+        assert "error" in result or "message" in result
+
+    def test_tool_preset_path_with_invalid_preset(self, tmp_path, monkeypatch):
+        """Test preset path with invalid preset raises error."""
+        from wtplan import mcp_server
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".wtplan.yml").write_text("presets: {}")
+
+        with pytest.raises(KeyError):
+            mcp_server.tool_preset_path(
+                preset="nonexistent",
+                issue_iid=1,
+            )
+
+    def test_tool_repo_add_with_repo(self, tmp_path, monkeypatch):
+        """Test repo add with valid repo."""
+        from wtplan import mcp_server
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".wtplan.yml").write_text("repos:\n  my-repo:\n    path: /tmp/my-repo\n")
+
+        result = mcp_server.tool_repo_add(
+            repo="my-repo",
+            issue_iid=1,
+            base=str(tmp_path),
+            apply=False,
+            force_links=False,
+            delete_links=False,
+        )
+        assert result is not None
+
+    def test_tool_repo_add_with_invalid_repo(self, tmp_path, monkeypatch):
+        """Test repo add with invalid repo - returns plan (validation happens later)."""
+        from wtplan import mcp_server
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".wtplan.yml").write_text("repos:\n  my-repo:\n    path: /tmp/my-repo\n")
+
+        result = mcp_server.tool_repo_add(
+            repo="nonexistent",
+            issue_iid=1,
+            apply=False,
+            force_links=False,
+            delete_links=False,
+        )
+        assert result is not None
+        assert "plan" in result
+
+
+class TestEdgeCases:
+    """Tests for edge cases and error handling."""
+
+    def test_missing_inventory_file(self, tmp_path, monkeypatch):
+        """Test behavior when inventory file is missing."""
+        from wtplan import mcp_server
+
+        monkeypatch.chdir(tmp_path)
+
+        with pytest.raises(FileNotFoundError):
+            mcp_server.tool_preset_add(
+                preset="test",
+                issue_iid=1,
+                apply=False,
+                force_links=False,
+                delete_links=False,
+            )
+
+    def test_invalid_issue_iid_type(self):
+        """Test that invalid issue_iid type is handled."""
+        from wtplan.cli import app
+        from typer.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["preset", "add", "test", "abc"])
+        assert result.exit_code != 0
+
+    def test_preset_add_with_apply_and_force_flags(self, tmp_path, monkeypatch):
+        """Test preset add with both --apply and --force-links."""
+        from wtplan import mcp_server
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".wtplan.yml").write_text("presets:\n  test:\n    primary_repo: r\n    repos:\n      - r\n")
+
+        result = mcp_server.tool_preset_add(
+            preset="test",
+            issue_iid=1,
+            base=str(tmp_path),
+            apply=True,
+            force_links=True,
+            delete_links=False,
+        )
+        assert result is not None

@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from .inventory import DEFAULT_INVENTORY, resolve_paths, write_inventory
 from .policy import LinkPolicy, per_link_policy
@@ -15,6 +16,23 @@ class PlanItem:
     kind: str  # NOOP|ADD|UPDATE|DELETE|CONFLICT
     target: str
     detail: str
+
+
+def _validate_link_item(it: Any) -> tuple[dict | None, PlanItem | None]:
+    """Validate a link item and return (item_dict, error) tuple."""
+    if not isinstance(it, dict):
+        return None, PlanItem("CONFLICT", "<unknown>", "invalid link item")
+    source = str(it.get("source"))
+    if not source:
+        return None, PlanItem("CONFLICT", "<unknown>", "missing source")
+    return it, None
+
+
+def _validate_source_exists(src: Path, dst: Path) -> PlanItem | None:
+    """Validate source exists."""
+    if not src.exists():
+        return PlanItem("CONFLICT", str(dst), f"missing source: {src}")
+    return None
 
 
 def ensure_inventory(base_dir: Path, toolbox_dir: str | None = None) -> Path:
@@ -81,17 +99,21 @@ def plan_links(inv: dict, base_dir: Path, policy: LinkPolicy) -> list[PlanItem]:
 
     plan: list[PlanItem] = []
     for it in items:
-        if not isinstance(it, dict):
-            plan.append(PlanItem("CONFLICT", "<unknown>", "invalid link item"))
+        item, error = _validate_link_item(it)
+        if error:
+            plan.append(error)
             continue
-        source = str(it.get("source"))
-        target = str(it.get("target", Path(source).name))
-        p = per_link_policy(it, policy)
+        assert item is not None
+
+        source = str(item.get("source"))
+        target = str(item.get("target", Path(source).name))
+        p = per_link_policy(item, policy)
         src = tb / source
         dst = (base_dir / target).resolve()
 
-        if not src.exists():
-            plan.append(PlanItem("CONFLICT", str(dst), f"missing source: {src}"))
+        src_error = _validate_source_exists(src, dst)
+        if src_error:
+            plan.append(src_error)
             continue
 
         if not dst.exists():
@@ -137,17 +159,21 @@ def apply_links(inv: dict, base_dir: Path, policy: LinkPolicy) -> list[PlanItem]
     out: list[PlanItem] = []
 
     for it in items:
-        if not isinstance(it, dict):
+        item, error = _validate_link_item(it)
+        if error:
             continue
-        source = str(it.get("source"))
-        target = str(it.get("target", Path(source).name))
-        p = per_link_policy(it, policy)
+        assert item is not None
+
+        source = str(item.get("source"))
+        target = str(item.get("target", Path(source).name))
+        p = per_link_policy(item, policy)
         src = tb / source
         dst = (base_dir / target).resolve()
         dst.parent.mkdir(parents=True, exist_ok=True)
 
-        if not src.exists():
-            out.append(PlanItem("CONFLICT", str(dst), f"missing source: {src}"))
+        src_error = _validate_source_exists(src, dst)
+        if src_error:
+            out.append(src_error)
             continue
 
         if dst.exists() or dst.is_symlink():
