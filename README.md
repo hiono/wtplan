@@ -30,10 +30,34 @@ wtplan init --toolbox /workspace/toolbox
 - Creates `.wtplan.yml` if it doesn't exist (template including `default_policy`)
 - Creates `bare/` and `worktrees/` directories
 
-### Get Workspace Path (Useful for cd helper)
+### Preset Mode Commands
+
+Create and manage workspaces from a predefined preset configuration:
 
 ```bash
-wtplan path <PRESET> <IID> --repo <ALIAS>
+# Create workspace from preset
+wtplan preset add <PRESET> <IID> [--apply] [--force-links] [--delete-links]
+
+# Remove workspace
+wtplan preset rm <PRESET> <IID>
+
+# Get workspace path
+wtplan preset path <PRESET> <IID> [--repo <ALIAS>]
+```
+
+### Single Repo Mode Commands
+
+Create and manage workspaces from a single repository:
+
+```bash
+# Create workspace from single repo
+wtplan repo add <REPO> <IID> [--apply] [--force-links] [--delete-links]
+
+# Remove workspace
+wtplan repo rm <REPO> <IID>
+
+# Get workspace path
+wtplan repo path <REPO> <IID>
 ```
 
 ### Completion (bash)
@@ -43,6 +67,8 @@ eval "$(wtplan completion bash)"
 ```
 
 ### cd (Requires shell integration via eval)
+
+**Deprecated:** Use `wtplan preset path` or `wtplan repo path` instead.
 
 ```bash
 eval "$(wtplan cd <PRESET> <IID> --repo <ALIAS>)"
