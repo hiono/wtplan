@@ -1,4 +1,3 @@
-
 name: CI
 on:
   push:
@@ -15,8 +14,8 @@ jobs:
       - name: Install
         run: uv sync --all-extras
       - name: Lint
-        run: uv run ruff check .
+        run: uvx ruff check .
       - name: Format
-        run: uv run ruff format --check .
+        run: uvx ruff format --check .
       - name: Test
-        run: uv run pytest
+        run: uvx pytest
