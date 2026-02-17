@@ -6,16 +6,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      NO_COLOR: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: false
       - name: Install
-        run: uv sync --all-extras
+        run: |
+          uv sync --all-extras
+          uv pip install -e .
       - name: Lint
         run: uv run ruff check .
       - name: Format
         run: uv run ruff format --check .
       - name: Test
-        run: uv run pytest
+        run: uv run pytest --color=no -v

@@ -2,16 +2,28 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Annotated
 
-import typer
-from rich.console import Console
 
-from .core import ensure_inventory
-from .inventory import load_inventory
-from .mcp_server import (
+def _truthy_env(name: str) -> bool:
+    v = os.environ.get(name)
+    return v is not None and v != ""
+
+
+if _truthy_env("NO_COLOR"):
+    os.environ["_TYPER_FORCE_DISABLE_TERMINAL"] = "1"
+    os.environ["FORCE_COLOR"] = ""
+    os.environ["PY_COLORS"] = ""
+
+import typer  # noqa: E402
+from rich.console import Console  # noqa: E402
+
+from wtplan.core import ensure_inventory  # noqa: E402
+from wtplan.inventory import load_inventory  # noqa: E402
+from wtplan.mcp_server import (  # noqa: E402
     mcp,
     tool_plan,
     tool_preset_add,
@@ -22,13 +34,18 @@ from .mcp_server import (
     tool_repo_rm,
 )
 
-console = Console()
+NO_COLOR = _truthy_env("NO_COLOR")
+
+console = Console(
+    no_color=NO_COLOR,
+    color_system=None if NO_COLOR else "auto",
+    force_terminal=False if NO_COLOR else None,
+)
 app = typer.Typer(
     name="wtplan",
     help="Manage Git worktrees across multiple repositories",
     no_args_is_help=False,
 )
-
 # Subcommand groups
 preset_app = typer.Typer(help="Manage preset-based workspaces")
 repo_app = typer.Typer(help="Manage single repository workspaces")

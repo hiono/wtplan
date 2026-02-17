@@ -1,12 +1,24 @@
 """Tests for wtplan repo operations and links/copy functionality."""
 
+import os
+
 import pytest
 from typer.testing import CliRunner
 
 from wtplan import mcp_server
 from wtplan.cli import app
 
-runner = CliRunner()
+test_env = os.environ.copy()
+test_env.update(
+    {
+        "NO_COLOR": "1",
+        "_TYPER_FORCE_DISABLE_TERMINAL": "1",
+        "FORCE_COLOR": "",
+        "PY_COLORS": "",
+    }
+)
+
+runner = CliRunner(env=test_env)
 
 
 class TestRepoAdd:
@@ -262,8 +274,6 @@ class TestEdgeCases:
 
     def test_invalid_issue_iid_type(self):
         """Test that invalid issue_iid type is handled."""
-
-        runner = CliRunner()
         result = runner.invoke(app, ["preset", "add", "test", "abc"])
         assert result.exit_code != 0
 
