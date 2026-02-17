@@ -1,7 +1,7 @@
 
 [project]
 name = "wtplan"
-version = "0.2.0"
+version = "0.3.0"
 description = "Issue-driven multi-repo worktree manager with MCP stdio server"
 readme = "README.md"
 requires-python = ">=3.11"
