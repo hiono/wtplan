@@ -41,6 +41,9 @@ indent-style = "space"
 testpaths = ["tests"]
 addopts = "-q"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/wtplan"]
+
 [build-system]
 requires = ["hatchling>=1.21.0"]
 build-backend = "hatchling.build"
