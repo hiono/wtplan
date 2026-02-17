@@ -263,7 +263,6 @@ class TestEdgeCases:
     def test_invalid_issue_iid_type(self):
         """Test that invalid issue_iid type is handled."""
 
-
         runner = CliRunner()
         result = runner.invoke(app, ["preset", "add", "test", "abc"])
         assert result.exit_code != 0
